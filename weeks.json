@@ -1,0 +1,26 @@
+{
+  "_note": "The delivery manifest. sync.py reads this and checks out only the paths whose unlock moment has passed. Unlock times carry an explicit -07:00 offset on purpose: the dev container's clock is UTC, and a bare date would open a week on Monday evening local time. Dates come from scripts/build_calendar.py (Spring 2027). A week is DUE the Wednesday 11:59 PM after its Thursday session and is locked then -- no late credit.",
+  "weeks": [
+    {
+      "week": 2,
+      "title": "The Board Appears",
+      "unlock": "2027-01-21T08:00:00-07:00",
+      "delivers": [
+        "weeks/week02.md",
+        "include/rules.h",
+        "src/core/rules.cpp",
+        "src/game/main.cpp",
+        "src/game/render.h",
+        "src/game/render.cpp",
+        "tests/test_week02.cpp",
+        "tests/scorecard.json",
+        "CMakeLists.txt"
+      ],
+      "hands_over": [
+        "src/core/rules.cpp"
+      ],
+      "removes": [],
+      "due": "2027-01-27T23:59:00-07:00"
+    }
+  ]
+}

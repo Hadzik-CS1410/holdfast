@@ -1,0 +1,7 @@
+These tests are yours.
+
+Anything you put in this folder is never overwritten by a sync and never
+graded. Week 12 asks you to write one here on purpose.
+
+Build and run them with:
+    cmake --build build --target student_tests && ./build/student_tests

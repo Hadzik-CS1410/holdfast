@@ -1,0 +1,24 @@
+{
+    // F5 debugs whichever target is selected in the CMake status bar
+    // (the "Launch" target). Breakpoints, Step Over (F10), Step Into (F11).
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug selected CMake target",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${command:cmake.launchTargetPath}",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Pretty-print std::string, std::vector, ...",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        }
+    ]
+}
