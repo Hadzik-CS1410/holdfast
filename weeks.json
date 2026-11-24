@@ -13,6 +13,7 @@
         "src/game/render.h",
         "src/game/render.cpp",
         "tests/test_week02.cpp",
+        "tests/scorecard.py",
         "tests/scorecard.json",
         "CMakeLists.txt"
       ],
