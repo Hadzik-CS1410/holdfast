@@ -73,7 +73,25 @@ def identity():
         "who": who or "(git identity not set -- see Lab 0)",
         "commit": (commit + dirty) if commit else "(no commits yet)",
         "pushed": pushed(),
+        "branch": branch_line(),
     }
+
+
+def branch_line():
+    """Which branch, and a nudge if it is the wrong one.
+
+    A pull request needs a branch to open from, and the most common way to end
+    up without one is to never leave main. git can answer this for free; it
+    cannot answer "is there a pull request", because a pull request is a GitHub
+    object and not a git one. So the screenshot carries the branch, and the
+    instructor's checker confirms the pull request.
+    """
+    name = _git("rev-parse", "--abbrev-ref", "HEAD")
+    if not name:
+        return "(no commits yet)"
+    if name in ("main", "master"):
+        return name + "   <- work belongs on its own branch: git switch -c week-NN"
+    return name
 
 
 def pushed():
@@ -210,6 +228,7 @@ def main():
     # Printed in the header, not at the bottom, so it is inside any screenshot
     # that shows the score. Part of the submission, not a footnote to it.
     print("  %-13s %s" % ("Pushed", who["pushed"]))
+    print("  %-13s %s" % ("Branch", who["branch"]))
     print("  %-13s %s" % ("Run at",
                           datetime.datetime.now().strftime("%Y-%m-%d %H:%M")))
 

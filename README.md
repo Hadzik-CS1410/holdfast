@@ -2,6 +2,8 @@
 
 A real-time tower defense game, in C++. You build it one feature a week, for twelve weeks, in this repository. By the end it has two class hierarchies, loads its levels from files, and is about 1,500 lines of your own code.
 
+**One repository, all semester.** You created it once, in class, through the GitHub Repo Creator. You never make another — each week `python sync.py` brings the new week's files into this same repo, so its history is the whole story of the game being built.
+
 This file is written once and never grows. **Each week's instructions arrive in `weeks/`** — this week's is the newest file there.
 
 ---
@@ -71,7 +73,7 @@ python tests/scorecard.py 2      # score Week 2
 
 Always name the week. Run it with no number and it will list the weeks you have.
 
-Sections are all-or-nothing — every test in a section must pass to earn its points. Four sections, 5 points each, 20 points a week.
+Sections are all-or-nothing — every test in a section must pass to earn its points. **Four sections of 4 = 16**, and the other **4 points** of the week come from the rubric: committing, pushing, branching, and opening a pull request. Check the scorecard header says `Pushed  yes` and shows a `week-NN` branch before you screenshot it.
 
 ---
 
