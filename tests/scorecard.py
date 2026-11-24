@@ -72,7 +72,38 @@ def identity():
         "repo": repo or "(no git remote -- did you clone, or download a ZIP?)",
         "who": who or "(git identity not set -- see Lab 0)",
         "commit": (commit + dirty) if commit else "(no commits yet)",
+        "pushed": pushed(),
     }
+
+
+def pushed():
+    """Is the work that just scored actually on GitHub?
+
+    The commit line already betrays a dirty tree or an empty repo, so a student
+    who never commits is visible in their own screenshot. A student who commits
+    and never PUSHES was not: the screenshot looked perfect and the repository
+    was empty. CS 1400 had a run of exactly that.
+
+    No network needed. Git already stores where origin was when you last
+    cloned or pushed, so counting commits since then is a local question -- and
+    for a student who has never pushed, that count is simply all of them.
+    """
+    branch = _git("rev-parse", "--abbrev-ref", "HEAD")
+    if not branch:
+        return "no -- nothing committed yet"
+    # Prefer the branch's own upstream; fall back to origin/<branch>, then to
+    # origin/main, so this reads sensibly on a week branch too.
+    for ref in ("@{upstream}", "origin/" + branch, "origin/main"):
+        if _git("rev-parse", "--verify", "--quiet", ref):
+            ahead = _git("rev-list", "--count", ref + "..HEAD")
+            if not ahead.isdigit():
+                break
+            n = int(ahead)
+            if n == 0:
+                return "yes"
+            return ("NO -- %d commit%s not on GitHub. Run: git push"
+                    % (n, "" if n == 1 else "s"))
+    return "unknown -- no origin to compare against (did you clone?)"
 
 
 def configure():
@@ -176,6 +207,9 @@ def main():
     print("  %-13s %s" % ("Repository", who["repo"]))
     print("  %-13s %s" % ("Committed by", who["who"]))
     print("  %-13s %s" % ("Commit", who["commit"]))
+    # Printed in the header, not at the bottom, so it is inside any screenshot
+    # that shows the score. Part of the submission, not a footnote to it.
+    print("  %-13s %s" % ("Pushed", who["pushed"]))
     print("  %-13s %s" % ("Run at",
                           datetime.datetime.now().strftime("%Y-%m-%d %H:%M")))
 
