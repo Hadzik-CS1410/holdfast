@@ -6,11 +6,36 @@
       "target": "week02_tests",
       "label": "Week 2  The Board Appears",
       "sections": [
-        { "name": "Tower costs",        "suites": ["Week02Costs"],  "points": 5 },
-        { "name": "Selling a tower",    "suites": ["Week02Refund"], "points": 5 },
-        { "name": "The board's pattern","suites": ["Week02Board"],  "points": 5 },
-        { "name": "The shop table",     "suites": ["Week02Shop"],   "points": 5 }
+        {
+          "name": "Tower costs",
+          "suites": [
+            "Week02Costs"
+          ],
+          "points": 4
+        },
+        {
+          "name": "Selling a tower",
+          "suites": [
+            "Week02Refund"
+          ],
+          "points": 4
+        },
+        {
+          "name": "The board's pattern",
+          "suites": [
+            "Week02Board"
+          ],
+          "points": 4
+        },
+        {
+          "name": "The shop table",
+          "suites": [
+            "Week02Shop"
+          ],
+          "points": 4
+        }
       ]
     }
-  ]
+  ],
+  "_note": "Four all-or-nothing sections of 4 = 16. The remaining 4 of the week's 20 points are the git-hygiene rubric rows (git-rubric.json). It was 4 x 5 until git hygiene became graded; four sections is the property that matters, not the five."
 }

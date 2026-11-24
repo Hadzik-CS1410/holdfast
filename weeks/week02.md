@@ -1,6 +1,6 @@
 # Week 2 — The Board Appears
 
-**Module 1: C++ Basics.** 20 points: four sections, 5 points each.
+**Module 1: C++ Basics.** 20 points: four code sections of 4 (**16**), plus **4** for getting your work onto GitHub — committed and pushed. The scorecard prints `Pushed` in its header, so check it says `yes` before you screenshot.
 
 By Thursday your game opens a window, draws a board with a pattern you invented, prints a price list in aligned columns, and knows what every tower costs. You will not write a single line of graphics code to do it.
 
@@ -68,14 +68,14 @@ Mortar                 70 gold
 
 ## What's tested
 
-| Section | 5 points for |
+| Section | 4 points for |
 |---|---|
 | Tower costs | `towerCost` returns the right constant for 1, 2, 3 and **0** for anything else |
 | Selling a tower | `sellValue(90) == 63`, and selling never returns 0 gold for a real tower |
 | The board's pattern | `isDarkTile` is deterministic and is not one flat colour — **your pattern, whatever it is, passes** |
 | The shop table | every printed line is the same width, so `setw` was actually used |
 
-Sections are all-or-nothing: both tests in a section must pass to earn its 5 points.
+Sections are all-or-nothing: both tests in a section must pass to earn its 4 points. The other **4 points** come from the Canvas rubric: 2 for committing and 2 for pushing. Check the scorecard says `Pushed  yes` before you screenshot it.
 
 ```bash
 python tests/scorecard.py 2
