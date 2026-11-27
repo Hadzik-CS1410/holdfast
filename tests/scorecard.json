@@ -3,39 +3,67 @@
   "default": "ask",
   "targets": [
     {
-      "target": "week02_tests",
-      "label": "Week 2  The Board Appears",
+      "target": "cpp_basics_tests",
+      "label": "C++ Basics  The Board Appears",
       "sections": [
         {
-          "name": "Tower costs",
+          "name": "LIVE    Tower costs",
           "suites": [
-            "Week02Costs"
+            "LiveTowerCost"
           ],
-          "points": 4
+          "points": 7
         },
         {
-          "name": "Selling a tower",
+          "name": "LIVE    Selling a tower",
           "suites": [
-            "Week02Refund"
+            "LiveSellValue"
           ],
-          "points": 4
+          "points": 7
         },
         {
-          "name": "The board's pattern",
+          "name": "LIVE    The board pattern",
           "suites": [
-            "Week02Board"
+            "LiveDarkTile"
           ],
-          "points": 4
+          "points": 7
         },
         {
-          "name": "The shop table",
+          "name": "LIVE    The shop table",
           "suites": [
-            "Week02Shop"
+            "LiveShopTable"
           ],
-          "points": 4
+          "points": 7
+        },
+        {
+          "name": "FINISH  Tower damage",
+          "suites": [
+            "FinishTowerDamage"
+          ],
+          "points": 7
+        },
+        {
+          "name": "FINISH  Upgrade cost",
+          "suites": [
+            "FinishUpgradeCost"
+          ],
+          "points": 7
+        },
+        {
+          "name": "FINISH  Edge tiles",
+          "suites": [
+            "FinishEdgeTile"
+          ],
+          "points": 7
+        },
+        {
+          "name": "FINISH  The tower table",
+          "suites": [
+            "FinishTowerTable"
+          ],
+          "points": 7
         }
       ]
     }
   ],
-  "_note": "Four all-or-nothing sections of 4 = 16. The remaining 4 of the week's 20 points are the git-hygiene rubric rows (git-rubric.json). It was 4 x 5 until git hygiene became graded; four sections is the property that matters, not the five."
+  "_note": "Eight all-or-nothing sections of 7 = 56, plus 4 git-hygiene points (git-rubric.json) = 60. Four LIVE sections for what the class wrote together and four FINISH siblings written alone -- each FINISH section is the same shape as the LIVE one above it (ADR 0004)."
 }

@@ -3,7 +3,7 @@ Holdfast -- catching up
 
 Two ways back, for when a week got away from you.
 
-    python catchup.py 05            read Week 5's finished code beside your own
+    python catchup.py arrays        read that session's finished code beside your own
     python catchup.py --checkpoint  get a working game back, keeping your work
     python catchup.py --list        which weeks are published
 
@@ -104,18 +104,46 @@ def make_catchup_dir():
 
 
 def published(root):
-    weeks = []
-    for name in sorted(os.listdir(root)):
-        if name.startswith("week") and os.path.isdir(os.path.join(root, name)):
-            try:
-                weeks.append(int(name[4:]))
-            except ValueError:
-                pass
-    return weeks
+    """The session slugs that have been published, in order."""
+    return sorted(name for name in os.listdir(root)
+                  if os.path.isdir(os.path.join(root, name))
+                  and not name.startswith("."))
+
+
+def deliver_solution(slug):
+    """Copy one published session's solution into catchup/<slug>/.
+
+    sync.py calls this for the PREVIOUS session every time a new one opens, so
+    the normal way to get an answer is simply to sync -- no second command to
+    remember, and nothing arrives while the work is still open, because a
+    session is due the night before the next one unlocks (ADR 0004).
+
+    Returns the folder, or None if that session is not published yet. Never
+    raises: a solution that cannot be fetched must not block the sync that
+    delivers this session's work.
+    """
+    try:
+        temp = fetch_solutions()
+    except SystemExit:
+        return None
+    try:
+        source = week_dir(temp, slug)
+        if not os.path.isdir(source):
+            return None
+        target = os.path.join(CATCHUP_DIR, slug)
+        if os.path.exists(target):
+            shutil.rmtree(target)
+        make_catchup_dir()
+        shutil.copytree(source, target)
+        return target
+    except Exception:
+        return None
+    finally:
+        shutil.rmtree(temp, ignore_errors=True)
 
 
 def week_dir(root, number):
-    return os.path.join(root, "week%02d" % number)
+    return os.path.join(root, number)
 
 
 # ------------------------------------------------------------------ reading
@@ -127,13 +155,14 @@ def read_week(number):
         source = week_dir(temp, number)
         if not os.path.isdir(source):
             weeks = published(temp)
-            stop(f"Week {number} isn't published yet.",
-                 "Solutions appear one week after that week was due.",
+            stop(f"The {number} solution isn't published yet.",
+                 "A session's solution appears when the NEXT session opens --",
+                 "and your sync brings it in automatically.",
                  "",
                  "Published right now: " +
-                 (", ".join(str(w) for w in weeks) if weeks else "none yet"))
+                 (", ".join(weeks) if weeks else "none yet"))
 
-        target = os.path.join(CATCHUP_DIR, "week%02d" % number)
+        target = os.path.join(CATCHUP_DIR, number)
         if os.path.exists(target):
             shutil.rmtree(target)
         make_catchup_dir()
@@ -148,7 +177,7 @@ def read_week(number):
 
     say()
     rule()
-    say(f"  Week {number}'s solution is in catchup/week%02d/" % number,
+    say(f"  The {number} solution is in catchup/{number}/",
         GREEN + BOLD)
     rule()
     for path in files:
@@ -181,7 +210,7 @@ def checkpoint():
         source = week_dir(temp, number)
 
         # Only the folders the solution actually carries are touched. For the
-        # early weeks that is src/core/ alone; include/ joins it from Week 7,
+        # early weeks that is src/core/ alone; include/ joins it from the Multi-file session,
         # when you start writing your own headers.
         folders = sorted(name for name in os.listdir(source)
                          if os.path.isdir(os.path.join(source, name)))

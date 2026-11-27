@@ -19,7 +19,7 @@ That fetches this week's instructions, tests and scaffolding. It will tell you w
 Then, and only then, start a branch for the week:
 
 ```bash
-git switch -c week-03
+git switch -c functions-debugging
 ```
 
 **Sync first, then branch.** `sync.py` refuses to run on a week branch, because pulling my files into your branch would make your pull request look like you changed eleven files when you changed three.
@@ -31,7 +31,7 @@ git switch -c week-03
 | Command | What it does |
 |---|---|
 | `python sync.py` | get this week's work. Run it at the start of every session |
-| `python tests/scorecard.py 2` | score one week. The number it prints is what you submit |
+| `python tests/scorecard.py cpp-basics` | score one session. The number it prints is what you submit |
 | `python catchup.py --help` | behind? This is the way back. See *Falling behind* below |
 
 ---
@@ -46,7 +46,7 @@ git switch -c week-03
 | `src/game/main.cpp`, `src/game/render.cpp` | mine | the window, the loop, the pixels. Re-delivered every week |
 | `tests/`, `weeks/`, `CMakeLists.txt`, `sync.py` | mine | re-delivered every week |
 
-\* `include/` is mine until Week 7, when you write your first header and it becomes yours.
+\* `include/` is mine until the **Multi-file & Recursion** session, when you write your first header and it becomes yours.
 
 **Editing one of my files is the one way to make a sync go wrong.** It will be overwritten and your change will be gone. If you want something in there to be different, ask — sometimes the answer is yes and it changes for everybody.
 
@@ -68,19 +68,19 @@ Press `ESC` to close the window.
 ## Scoring yourself
 
 ```bash
-python tests/scorecard.py 2      # score Week 2
+python tests/scorecard.py cpp-basics      # score the C++ Basics session
 ```
 
-Always name the week. Run it with no number and it will list the weeks you have.
+Always name the session. Run it with no number and it will list the sessions you have.
 
-Sections are all-or-nothing — every test in a section must pass to earn its points. **Four sections of 4 = 16**, and the other **4 points** of the week come from the rubric: committing, pushing, branching, and opening a pull request. Check the scorecard header says `Pushed  yes` and shows a `week-NN` branch before you screenshot it.
+Sections are all-or-nothing — every test in a section must pass to earn its points. **Four sections of 4 = 16**, and the other **4 points** of the week come from the rubric: committing, pushing, branching, and opening a pull request. Check the scorecard header says `Pushed  yes` and shows a the session slug branch before you screenshot it.
 
 ---
 
 ## Submitting a week
 
 1. Score it and **screenshot the scorecard**
-2. Tag the commit: `git tag week-03 && git push origin week-03`
+2. Tag the commit: `git tag cpp-basics && git push origin cpp-basics`
 3. Upload the screenshot to Canvas
 
 The screenshot has your name, your repository and your commit stamped on it by the scorecard — none of which you type. Your repository gets re-scored from the tag, so the tag has to point at the work the screenshot shows.
@@ -89,30 +89,39 @@ The screenshot has your name, your repository and your commit stamped on it by t
 
 ## The log
 
-`CHANGELOG.md` has one row a week and two numbers in it:
+`CHANGELOG.md` gets **one line per session**: what you added, and anything that
+surprised you.
 
-- **Touch count** — how many separate *places in the code* you had to edit to make this week's change. You count these by hand.
-- **Changed files** — the "N changed files" figure from your pull request header. Free; just read it off.
-
-They are different numbers and the difference is the point. Adding a tower in Week 4 will cost you six to eight touches. Adding one in Week 13 will cost you one new file. Same game, much bigger, far less work — and you will have your own data proving it. The final project asks you to explain the curve, so fill the log in every week or you will have nothing to explain.
-
+It takes thirty seconds and it is the only record of how the game grew. By April
+you will have twelve lines describing a program you could not have written in
+January, which is the point — and the final project asks you **what got easier,
+and why**. You answer that from your own repository, so the log is where you
+find your evidence.
 ---
 
 ## Falling behind
 
-It happens, and it is recoverable. The rule is simple: **you score 0 for a week you skipped, and full marks on everything after it.** Falling one week behind is nothing. Falling three weeks behind is the end of the game for you, so do not let it get there.
+It happens, and it is recoverable. **One date to remember: everything from a
+session is due the night before the next one.** Both halves — what we wrote
+together in class and the sibling you write alone.
 
-Each week's solution is published one week after that week was due:
+**You do not have to ask for the answers.** The next time you run
+`python sync.py`, the previous session's full solution arrives in `catchup/`,
+because that session has closed. Read it beside your own code; git ignores the
+folder, so nothing of yours is touched.
 
 ```bash
-python catchup.py 05          # read Week 5's solution beside your own code
+python catchup.py arrays        # an older session, out of order
 python catchup.py --checkpoint  # badly behind: get a working game back
 ```
 
-`catchup.py 05` puts the solution in a `catchup/` folder that git ignores, so you read it and copy across what you are missing. Your own code, your colours and your numbers stay.
+`catchup.py` is for when you are *several* sessions behind. For the one you
+just missed, syncing is enough.
 
-`--checkpoint` is the bigger hammer: it saves everything you have to a branch first, then replaces your game logic with the last published week so you have something that runs again. Your `CHANGELOG.md` is kept. Nothing is deleted — your work is on a branch and the command tells you its name.
-
+`--checkpoint` is the bigger hammer: it saves everything you have to a branch
+first, then replaces your game logic with the last published session so you
+have something that runs again. Your `CHANGELOG.md` is kept. Nothing is
+deleted — your work is on a branch and the command tells you its name.
 ---
 
 ## Getting help

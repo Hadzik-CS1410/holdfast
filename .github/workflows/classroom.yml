@@ -1,0 +1,127 @@
+name: Autograde
+
+# workflow_dispatch / repository_dispatch only -- deliberately NOT on push.
+#
+# Two reasons, the first inherited from CS 2420's workflow: GitHub rounds every
+# Actions job up to a full minute, so a student debugging in a flurry would burn
+# a minute per attempt. And students already get their score instantly and for
+# free from `python3 tests/scorecard.py`; this is the INSTRUCTOR's side, swept
+# across every student repo at grading time.
+#
+# Because it scores the repository as it stands, it is an independent check on
+# what the student claimed -- not a restatement of it. That matters here: the
+# whole reason this exists is a CS 1400 cohort who screenshotted a score and
+# never pushed the code.
+#
+# repository_dispatch is what lets one command fan out to thirty repos:
+#   python scripts/check_student_work.py --assignment ct1-cpp-basics --dispatch
+on:
+  workflow_dispatch:
+    inputs:
+      week:
+        description: "Holdfast session to score, e.g. cpp-basics (blank for other assignments)"
+        required: false
+        default: ""
+      ref:
+        description: "Tag or commit to score (blank scores the default branch)"
+        required: false
+        default: ""
+  repository_dispatch:
+    types: [autograde]
+
+permissions:
+  contents: read
+
+jobs:
+  score:
+    runs-on: ubuntu-latest
+    steps:
+      # Score the SUBMITTED commit, not whatever main looks like today.
+      #
+      # Holdfast is one cumulative repo for all twelve sessions, so by the
+      # time a session is graded the student has synced twice more and main
+      # has moved on. Worse, the deliberate refactor sessions (enums replacing
+      # ints, classes replacing structs, virtual functions) make earlier
+      # sessions' tests stop compiling ON PURPOSE -- so scoring today's main
+      # would read an earlier session as a regression.
+      #
+      # The dispatcher resolves the ref: the session tag if it exists, else
+      # the merge commit of that session's pull request, else the default
+      # branch. fetch-depth 0 because a tag is usually not in a shallow clone.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.event.client_payload.ref || '' }}
+          fetch-depth: 0
+
+      - name: What is being scored
+        id: which
+        run: |
+          WEEK="${{ github.event.inputs.week }}"
+          if [ -z "$WEEK" ]; then WEEK="${{ github.event.client_payload.week }}"; fi
+          echo "week=$WEEK" >> "$GITHUB_OUTPUT"
+          echo "Scoring $(git rev-parse --short HEAD) on ${WEEK:-this repo}"
+
+      - name: Configure
+        # HOLDFAST_BUILD_GAME=OFF matters for the game repo and is harmless
+        # everywhere else: the autograder never opens a window, and building
+        # raylib would download and compile it on every run -- minutes per
+        # student per week, against a monthly Actions allowance.
+        #
+        # Through the PRESET, not a hand-written cmake line, so the autograder
+        # configures the project exactly the way the student's container does --
+        # same generator, same build type, same build/ directory. The override
+        # is the only difference. (A plain project has no such option and cmake
+        # just warns that it went unused.)
+        run: cmake --preset default -DHOLDFAST_BUILD_GAME=OFF
+
+      - name: Score
+        # scorecard.py is the ONE place section/suite/points live. CS 2420's
+        # workflow restates them in YAML and carries a comment telling you to
+        # keep the two in step by hand; running the scorecard instead means
+        # there is nothing to keep in step.
+        run: |
+          set +e
+          # Written OUTSIDE the repo. score.json at the repo root is an
+          # untracked file, and the scorecard would then report the repository
+          # as dirty because of the autograder's own output.
+          WEEK="${{ steps.which.outputs.week }}"
+          python3 tests/scorecard.py $WEEK --json > "$RUNNER_TEMP/score.json"
+          echo "exit=$?"
+          test -s "$RUNNER_TEMP/score.json"
+
+      - name: Summary
+        if: always()
+        run: |
+          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          import os
+          try:
+              d = json.load(open(os.environ["RUNNER_TEMP"] + "/score.json"))
+          except Exception as e:
+              print("## Autograde failed\n\n```\n%s\n```" % e)
+              raise SystemExit(0)
+          print("## %s" % d["title"])
+          print("")
+          print("**%d / %d**" % (d["earned"], d["possible"]))
+          print("")
+          print("| | |")
+          print("|---|---|")
+          print("| Commit | `%s` |" % d["commit"])
+          print("| Pushed | %s |" % d["pushed"])
+          print("| Branch | %s |" % d["branch"])
+          print("")
+          print("| Section | Tests | Points |")
+          print("|---|---|---|")
+          for s in d["sections"]:
+              print("| %s | %d of %d | %d/%d |"
+                    % (s["section"], s["tests_passed"], s["tests_total"],
+                       s["points"], s["points_possible"]))
+          PY
+
+      - name: Upload score
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: score
+          path: ${{ runner.temp }}/score.json
+          if-no-files-found: warn

@@ -38,12 +38,12 @@ if(HOLDFAST_BUILD_GAME)
 endif()
 
 # =============================================================================
-# One test program per week -- week02_tests, week03_tests, ...
+# One test program per session -- cpp_basics_tests, functions_debugging_tests, ...
 # =============================================================================
 # EXCLUDE_FROM_ALL matters: a week whose code you have not written yet does not
 # compile, and an excluded target is only built when something asks for it. So
 # `cmake --build build` always works, and the game always runs, no matter which
-# week you are on. scorecard.py asks for exactly one week.
+# session you are on. scorecard.py asks for exactly one session.
 FetchContent_Declare(
     googletest
     URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
@@ -53,13 +53,15 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-file(GLOB WEEK_TESTS CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_week*.cpp)
-foreach(test_file ${WEEK_TESTS})
-    get_filename_component(stem ${test_file} NAME_WE)       # test_week02
-    string(REPLACE "test_" "" week_name ${stem})            # week02
-    add_executable(${week_name}_tests EXCLUDE_FROM_ALL ${test_file})
-    target_link_libraries(${week_name}_tests PRIVATE core GTest::gtest_main)
-    target_compile_options(${week_name}_tests PRIVATE -Wall -Wextra -Wno-unused-parameter)
+# Globbed, not listed: a session that has not unlocked yet has no test file,
+# and naming them would break the build before they arrive.
+file(GLOB SESSION_TESTS CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_*.cpp)
+foreach(test_file ${SESSION_TESTS})
+    get_filename_component(stem ${test_file} NAME_WE)       # test_cpp_basics
+    string(REPLACE "test_" "" session ${stem})              # cpp_basics
+    add_executable(${session}_tests EXCLUDE_FROM_ALL ${test_file})
+    target_link_libraries(${session}_tests PRIVATE core GTest::gtest_main)
+    target_compile_options(${session}_tests PRIVATE -Wall -Wextra -Wno-unused-parameter)
 endforeach()
 
 # Tests you write yourself live in tests/student/ and are yours alone -- a sync
