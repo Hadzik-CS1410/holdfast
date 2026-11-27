@@ -25,7 +25,7 @@ UPSTREAM_BRANCH = "weeks"
 REF = "upstream/" + UPSTREAM_BRANCH
 
 REPO = os.path.dirname(os.path.abspath(__file__))
-MANIFEST = "weeks.json"
+MANIFEST = "sessions.json"
 
 # Fetched before anything else, so a sync always runs against the current
 # calendar and the current scripts.
@@ -69,7 +69,7 @@ def stop(title, *lines):
 def load_weeks():
     path = os.path.join(REPO, MANIFEST)
     if not os.path.exists(path):
-        stop("weeks.json is missing.",
+        stop("sessions.json is missing.",
              "That file is mine and should always be here. Tell your",
              "instructor -- do not try to recreate it.")
     with open(path, encoding="utf-8") as fh:
@@ -79,7 +79,7 @@ def load_weeks():
 def unlocked(weeks, forced):
     """Weeks the calendar has reached, oldest first."""
     if forced is not None:
-        return [w for w in weeks if int(w["week"]) <= forced]
+        return [w for w in weeks if w["session"] == forced or w["module"] == forced]
 
     now = datetime.datetime.now(datetime.timezone.utc)
     open_weeks = []
@@ -96,9 +96,9 @@ def unlocked(weeks, forced):
 
 
 def next_locked(weeks, open_weeks):
-    numbers = {w["week"] for w in open_weeks}
+    numbers = {w["session"] for w in open_weeks}
     for week in weeks:
-        if week["week"] not in numbers:
+        if week["session"] not in numbers:
             return week
     return None
 
@@ -165,18 +165,18 @@ def main():
              "README.md in it.")
 
     # --- 1. main only -------------------------------------------------------
-    # Delivering my files into your week branch would make your pull request
-    # claim you changed eleven files when you changed three -- and that number
-    # is the one you log every week.
+    # Delivering my files into your session branch would make your pull
+    # request claim you changed eleven files when you changed three -- and
+    # that number is the one you log every session.
     branch = out("rev-parse", "--abbrev-ref", "HEAD")
     if branch != "main":
         stop(f"You're on the '{branch}' branch.",
-             "Sync onto main, then branch for the week:",
+             "Sync onto main, then branch for this session:",
              "",
              "    git switch main",
              "    python sync.py",
              f"    git switch -c {branch}" if branch != "HEAD" else
-             "    git switch -c week-NN",
+             "    git switch -c <session-name>",
              "",
              "Sync first, then branch. Nothing is lost -- your branch is",
              "still there and you'll switch straight back to it.")
@@ -254,6 +254,22 @@ def main():
 
     latest = open_weeks[-1]
 
+    # The previous session's answers, automatically.
+    #
+    # A session is due the night before the next one opens, so by the time you
+    # are reading this the previous session is closed and its solution can no
+    # longer help you cheat -- it can only help you catch up. One date to
+    # remember and one command to run (ADR 0004).
+    #
+    # It lands in catchup/, which git ignores, so it never touches your code.
+    solved = None
+    if len(open_weeks) >= 2:
+        try:
+            import catchup
+            solved = catchup.deliver_solution(open_weeks[-2]["session"])
+        except Exception:
+            solved = None        # never let this block the real delivery
+
     # Nothing new is the normal case for a second run in the same week -- and
     # it still has to answer "what am I doing and how do I score it", because
     # that is why a student runs this.
@@ -261,6 +277,7 @@ def main():
         git("reset", "-q")
         say()
         say("  You already have everything. Nothing new this week yet.", GREEN)
+        report_solution(solved, open_weeks)
         report_week(latest)
         report_next(weeks, open_weeks)
         return
@@ -290,6 +307,7 @@ def main():
         for path in dropped:
             say("    " + path, DIM)
 
+    report_solution(solved, open_weeks)
     report_week(latest)
     report_next(weeks, open_weeks)
 
@@ -299,32 +317,47 @@ def main():
         say("  version is the one that runs.", YELLOW)
 
 
+def report_solution(folder, open_weeks):
+    """Say that last session's answers arrived -- quietly, and only once."""
+    if not folder:
+        return
+    slug = open_weeks[-2]["session"]
+    say()
+    say(f"  The {slug} solution is now in catchup/{slug}/", GREEN)
+    say("  That session is closed, so this is the answer key. Read it beside", DIM)
+    say("  your own code; git ignores the folder, so nothing of yours moved.", DIM)
+
+
 def report_week(latest):
-    week_no = latest["week"]
-    briefing = f"weeks/week{week_no:02d}.md"
+    # Sessions are named for the module they belong to, never numbered. One
+    # name is the spec file, the scorecard argument, the branch and the tag.
+    slug = latest["session"]
+    briefing = f"weeks/{slug}.md"
     say()
     rule()
-    say(f"  Week {week_no} -- {latest.get('title', '')}".rstrip(), BOLD)
+    say(f"  {latest.get('topic', slug)} -- {latest.get('title', '')}".rstrip(), BOLD)
     rule()
     if os.path.exists(os.path.join(REPO, briefing)):
         say(f"  Start here:  {briefing}", BOLD)
-    say(f"  Score it:    python tests/scorecard.py {week_no}")
-    say(f"               (the {week_no} matters -- without it the scorecard", DIM)
-    say("               will ask you which week you meant)", DIM)
+    say(f"  Score it:    python tests/scorecard.py {slug}")
+    say(f"               (the name matters -- without it the scorecard", DIM)
+    say("               will list the sessions you have)", DIM)
     say()
-    say("  Now branch for the week, work, then open a pull request:")
-    say(f"    git switch -c week-{week_no:02d}", BOLD)
+    say("  Now branch for this session, work, then open a pull request:")
+    say(f"    git switch -c {slug}", BOLD)
 
 
 def report_next(weeks, open_weeks):
     upcoming = next_locked(weeks, open_weeks)
     if upcoming:
         say()
-        say(f"  Week {upcoming['week']} opens {upcoming['unlock'][:10]}.", DIM)
-    released = open_weeks[-1]["week"] - 1
-    if released >= 2:
-        say(f"  Behind? Week {released}'s solution is published:", DIM)
-        say(f"    python catchup.py {released:02d}", DIM)
+        say(f"  {upcoming.get('topic', upcoming['session'])} opens "
+            f"{upcoming['unlock'][:10]}.", DIM)
+    # The previous session's solution is the one that is published.
+    if len(open_weeks) >= 2:
+        prev = open_weeks[-2]["session"]
+        say(f"  Behind? The {prev} solution is published:", DIM)
+        say(f"    python catchup.py {prev}", DIM)
 
 
 if __name__ == "__main__":

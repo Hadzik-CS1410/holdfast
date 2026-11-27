@@ -1,4 +1,4 @@
-# Week 2 — The Board Appears
+# C++ Basics — The Board Appears
 
 **Module 1: C++ Basics.** 20 points: four code sections of 4 (**16**), plus **4** for getting your work onto GitHub — committed and pushed. The scorecard prints `Pushed` in its header, so check it says `yes` before you screenshot.
 
@@ -78,7 +78,7 @@ Mortar                 70 gold
 Sections are all-or-nothing: both tests in a section must pass to earn its 4 points. The other **4 points** come from the Canvas rubric: 2 for committing and 2 for pushing. Check the scorecard says `Pushed  yes` before you screenshot it.
 
 ```bash
-python tests/scorecard.py 2
+python tests/scorecard.py cpp-basics
 ```
 
 Run it as often as you like. It prints your score with your name and repository on it — that screenshot is what you submit.
@@ -98,8 +98,8 @@ The window opens on the browser desktop: **http://localhost:6080**. The price li
 
 ## Submitting
 
-1. `python tests/scorecard.py 2` and screenshot the result
-2. Tag it: `git tag week-02 && git push origin week-02`
+1. `python tests/scorecard.py cpp-basics` and screenshot the result
+2. Tag it: `git tag cpp-basics && git push origin cpp-basics`
 3. Upload the screenshot to Canvas
 
 The tag is how the score gets re-checked, so it has to point at the work the screenshot shows.

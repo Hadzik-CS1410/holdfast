@@ -1,14 +1,10 @@
 # My Holdfast log
 
-One row a week. Two numbers, and they are not the same number.
+One line per session: what you added, and anything that surprised you.
 
-- **Touch count** -- how many separate *places in the code* you had to edit this
-  week. Count them by hand. This is the number the whole semester is about.
-- **Changed files** -- the "N changed files" figure in your pull request header.
-  Read it off; do not count it.
+Thirty seconds, once a week. In April the final project asks you what got
+easier over the semester and why — this is where you look it up.
 
-Six edits inside one file is **6 touches** and **1 changed file**. Keep both.
-
-| Week | What I added | Touch count | Changed files | Notes |
-|---:|---|---:|---:|---|
-| 2 | the board, the shop table | | | |
+| Session | What I added | Notes |
+|---|---|---|
+| C++ Basics | the board, the shop table | |

@@ -2,7 +2,7 @@
 """Print your score. This is the output you screenshot when an assignment asks for one.
 
     python3 tests/scorecard.py            # the default for this repo
-    python3 tests/scorecard.py 5          # only Week 5 (Holdfast)
+    python3 tests/scorecard.py arrays     # only that session (Holdfast)
     python3 tests/scorecard.py all        # every test target
 
 Run it from the top of your repository -- the folder that holds CMakeLists.txt,
@@ -183,16 +183,19 @@ def select(targets, default, arg):
         # not guess. CS 1400's check_week.py defaulted to the newest week it
         # could find, and a pile of Week 5 submissions came back 0 / 20 with
         # nothing wrong with the code. Here the screenshot IS the submission.
-        names = ", ".join(t["target"].replace("_tests", "") for t in targets)
-        sys.exit("Name the week you want to score, for example:\n"
-                 "    python tests/scorecard.py 2\n\n"
+        names = ", ".join(t["target"].replace("_tests", "").replace("_", "-")
+                          for t in targets)
+        sys.exit("Name the session you want to score, for example:\n"
+                 "    python tests/scorecard.py cpp-basics\n\n"
                  "Available here: " + names)
     if arg == "all":
         return targets
     if arg == "latest":
         return targets[-1:]
-    if arg.isdigit():
-        arg = "week%02d" % int(arg)
+    # Sessions are named for their module, not numbered: `scorecard.py
+    # cpp-basics`. Targets spell that with underscores because a dash is not
+    # legal in a CMake target name, so accept either.
+    arg = arg.replace("-", "_")
     chosen = [t for t in targets if arg in t["target"]]
     if not chosen:
         sys.exit("Nothing in %s matches '%s'. Choices: %s, all" %
@@ -201,6 +204,8 @@ def select(targets, default, arg):
 
 
 def main():
+    args = [a for a in sys.argv[1:] if a != "--json"]
+    as_json = "--json" in sys.argv[1:]
     if not os.path.exists("CMakeLists.txt") or not os.path.exists(CONFIG):
         sys.exit("Run this from the top of your repository -- the folder that "
                  "holds CMakeLists.txt, not from inside tests/.")
@@ -208,35 +213,47 @@ def main():
         config = json.load(fh)
 
     targets = select(config["targets"], config.get("default", "all"),
-                     sys.argv[1] if len(sys.argv) > 1 else None)
+                     args[0] if args else None)
     configure()
-    color = use_color()
+    color = use_color() and not as_json
+
+    out = []                      # every printed line, for --json
 
     def line(text, ok=None):
         if color and ok is not None:
             text = (GREEN if ok else RED) + text + RESET
-        print(text)
+        if as_json:
+            out.append(text)
+        else:
+            print(text)
+
+    def say(text=""):
+        if as_json:
+            out.append(text)
+        else:
+            print(text)
 
     who = identity()
-    print("")
-    print("=" * WIDTH)
-    print(("YOUR SCORE -- " + config["title"]).center(WIDTH))
-    print("=" * WIDTH)
-    print("  %-13s %s" % ("Repository", who["repo"]))
-    print("  %-13s %s" % ("Committed by", who["who"]))
-    print("  %-13s %s" % ("Commit", who["commit"]))
+    say("")
+    say("=" * WIDTH)
+    say(("YOUR SCORE -- " + config["title"]).center(WIDTH))
+    say("=" * WIDTH)
+    say("  %-13s %s" % ("Repository", who["repo"]))
+    say("  %-13s %s" % ("Committed by", who["who"]))
+    say("  %-13s %s" % ("Commit", who["commit"]))
     # Printed in the header, not at the bottom, so it is inside any screenshot
     # that shows the score. Part of the submission, not a footnote to it.
-    print("  %-13s %s" % ("Pushed", who["pushed"]))
-    print("  %-13s %s" % ("Branch", who["branch"]))
-    print("  %-13s %s" % ("Run at",
+    say("  %-13s %s" % ("Pushed", who["pushed"]))
+    say("  %-13s %s" % ("Branch", who["branch"]))
+    say("  %-13s %s" % ("Run at",
                           datetime.datetime.now().strftime("%Y-%m-%d %H:%M")))
 
     earned = possible = 0
     failed_builds = []
+    detail = []
     for t in targets:
-        print("-" * WIDTH)
-        print("  " + t["label"])
+        say("-" * WIDTH)
+        say("  " + t["label"])
         ok, log = build(t["target"])
         counts = run(t["target"]) if ok else None
         if not ok:
@@ -254,15 +271,30 @@ def main():
             complete = total > 0 and passed == total
             if complete:
                 earned += sec["points"]
+            detail.append({"target": t["target"], "section": sec["name"].strip(),
+                           "tests_passed": passed, "tests_total": total,
+                           "points": sec["points"] if complete else 0,
+                           "points_possible": sec["points"]})
             line("    %-36s %2d of %-2d  %2d/%-2d" %
                  (sec["name"], passed, total,
                   sec["points"] if complete else 0, sec["points"]), complete)
 
-    print("=" * WIDTH)
+    say("=" * WIDTH)
     pct = (earned * 100.0 / possible) if possible else 0.0
     line("  %-40s %8s %3d/%-3d (%.0f%%)" % ("TOTAL", "", earned, possible, pct),
          earned == possible)
-    print("=" * WIDTH)
+    say("=" * WIDTH)
+
+    if as_json:
+        json.dump({"title": config["title"], "repo": who["repo"],
+                   "who": who["who"], "commit": who["commit"],
+                   "pushed": who["pushed"], "branch": who["branch"],
+                   "earned": earned, "possible": possible,
+                   "sections": detail,
+                   "report": "\n".join(out)},
+                  sys.stdout, indent=2)
+        print("")
+        return 0 if earned == possible else 0
 
     for target, log in failed_builds:
         errors = [l for l in log.splitlines() if "error" in l.lower()][:12]
@@ -276,6 +308,30 @@ def main():
         print("  Sections are all-or-nothing. To see exactly which tests fail:")
         print("")
         print("      ./build/%s --gtest_brief=1" % targets[-1]["target"])
+
+    # The tag, for a repo that holds more than one session.
+    #
+    # Nothing automates this. sync.py runs at the START of a session and
+    # cannot know which commit you will finish on, and the scorecard will not
+    # create tags behind your back. So it is yours to type -- and the script
+    # that grades you looks for it, falling back to your merged pull request
+    # if it is missing. This line exists because a step nobody is reminded of
+    # is a step half the class skips.
+    # "ask" is the marker for a repo that holds many sessions -- the same flag
+    # that stops a bare run from guessing which one you meant. Counting
+    # targets instead would stay silent all through the first session, when
+    # only one is built, which is exactly when the habit has to form.
+    if config.get("default") == "ask":
+        name = targets[-1]["target"].replace("_tests", "").replace("_", "-")
+        tagged = _git("tag", "--points-at", "HEAD")
+        print("")
+        if name in tagged.split():
+            print("  Tagged        %s points at this commit" % name)
+        else:
+            print("  Tag this commit before you submit -- it is how your")
+            print("  screenshot is matched to your code later:")
+            print("")
+            print("      git tag %s && git push origin %s" % (name, name))
     print("")
 
     # Exit 0 always. This is a report, not a gate; a non-zero exit here would
